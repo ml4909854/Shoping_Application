@@ -5,6 +5,7 @@ const connectDB = require("./config/db")
 const userRouter = require("./controller/user.controller.js")
 const productRouter = require("./controller/product.controller.js")
 const cartRouter = require("./controller/cart.controller.js")
+const orderRouter = require("./controller/order.controller.js")
 const app  = express()
 app.use(express.json())
 
@@ -15,6 +16,7 @@ const PORT  = process.env.PORT
 app.use("/user" , userRouter)
 app.use("/product" , productRouter)
 app.use("/cart" , cartRouter)
+app.use("/order" , orderRouter)
 
 //health
 app.use("/" , (req , res)=>{
