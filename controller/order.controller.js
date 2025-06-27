@@ -8,7 +8,7 @@ const router = express.Router();
 
 // ✅ Route 1: Buy Now - Place Single Product Order
 router.post("/buyOrderFromProduct", auth, async (req, res) => {
-  const { productId, address, paymentMethod } = req.body;
+  const { productId,quantity= 1 , address, paymentMethod } = req.body;
 
   try {
     const product = await Product.findById(productId);
@@ -18,7 +18,7 @@ router.post("/buyOrderFromProduct", auth, async (req, res) => {
 
     const newOrder = new Order({
       userId: req.user._id,
-      products: [{ productId, quantity:1 }],
+      products: [{ productId, quantity }],
       totalAmount,
       address,
       paymentMethod,
@@ -78,8 +78,8 @@ router.post("/buyOrderFromCart", auth, async (req, res) => {
 // ✅ Route 3: Get Logged-in User's Orders
 router.get("/", auth, async (req, res) => {
   try {
-    const orders = await Order.find({ userId: req.user._id }).populate("products.productId");
-    if(!orders && orders.length === 0){
+    const orders = await Order.find({ userId: req.user._id }).populate("userId" , "name").populate("products.productId");
+    if(orders.length === 0){
         return res.status(404).json({message:"No orders! Please and order some product!"})
     }
     res.status(200).json({ message: "Fetched orders successfully", orders });
@@ -87,41 +87,35 @@ router.get("/", auth, async (req, res) => {
     res.status(500).json({ message: "Error fetching orders", error: error.message });
   }
 });
-
-// ✅ Route 4: Admin - Update Order Status
-router.patch("/updateStatus/:orderId", auth, async (req, res) => {
-  const { orderId } = req.params;
-  const { status } = req.body;
-
-  try {
-    const order = await Order.findById(orderId);
-    if (!order) return res.status(404).json({ message: "Order not found" });
-
-    order.status = status;
-    await order.save();
-
-    res.status(200).json({ message: "Order status updated", order });
-  } catch (error) {
-    res.status(500).json({ message: "Error updating status", error: error.message });
-  }
-});
-
 router.delete("/delete/:orderId", auth, async (req, res) => {
   const { orderId } = req.params;
 
   try {
-    const order = await Order.findOneAndDelete({
+    // Step 1: Find the order
+    const order = await Order.findOne({
       _id: orderId,
-      userId: req.user._id, // Make sure user is deleting their own order
+      userId: req.user._id,
     });
 
+    // Step 2: Check if it exists
     if (!order) {
       return res.status(404).json({ message: "Order not found or unauthorized" });
     }
+
+    // Step 3: Don't allow deletion if delivered
+    if (order.status === "delivered") {
+      return res.status(400).json({
+        message: "Order history cannot be deleted. It contains your bill and warranty card.",
+      });
+    }
+
+    // Step 4: Now delete
+    await Order.findByIdAndDelete(orderId);
 
     res.status(200).json({ message: "Order deleted successfully", order });
   } catch (error) {
     res.status(500).json({ message: "Error deleting order", error: error.message });
   }
-})
+});
+
 module.exports = router;

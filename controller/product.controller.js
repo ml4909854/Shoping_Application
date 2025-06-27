@@ -20,14 +20,29 @@ router.get("/", async (req, res) => {
 });
 
 // ✅ Get a single product
+// ✅ Get a single product with its reviews
 router.get("/:id", async (req, res) => {
   try {
     const productId = req.params.id;
-    const product = await Product.findById(productId);
+
+    const product = await Product.findById(productId)
+      .populate({
+        path: "reviews",
+        populate: {
+          path: "userId", 
+          select: "name"
+        }
+      });
+
     if (!product) {
       return res.status(404).json({ message: "Product not found!" });
     }
-    res.status(200).json({ message: "Product details fetched.", product });
+
+    res.status(200).json({
+      message: "Product details fetched successfully.",
+      product
+    });
+
   } catch (error) {
     res.status(500).json({ message: "Error fetching product!", error: error.message });
   }

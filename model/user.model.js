@@ -5,6 +5,7 @@ const mongoose = require("mongoose")
 const roles = require("../constants/roles")
 
 const userSchema = new mongoose.Schema({
+    name:{type:String , required:true , trim:true},
     email:{type:String , required:true , unique:true, trim:true},
     password:{type:String , required:true, trim:true},
     role:{type:String , enum:[roles.admin , roles.user] , default:roles.user}

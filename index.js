@@ -6,6 +6,8 @@ const userRouter = require("./controller/user.controller.js")
 const productRouter = require("./controller/product.controller.js")
 const cartRouter = require("./controller/cart.controller.js")
 const orderRouter = require("./controller/order.controller.js")
+const reviewRouter = require("./controller/review.controller.js")
+const adminRouter = require("./controller/admin.controller.js")
 const app  = express()
 app.use(express.json())
 
@@ -17,9 +19,12 @@ app.use("/user" , userRouter)
 app.use("/product" , productRouter)
 app.use("/cart" , cartRouter)
 app.use("/order" , orderRouter)
+app.use("/review" , reviewRouter)
+app.use("/admin" , adminRouter)
+
 
 //health
-app.use("/" , (req , res)=>{
+app.get("/" , (req , res)=>{
     res.send("connected!")
 })
 

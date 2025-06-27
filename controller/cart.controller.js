@@ -30,7 +30,7 @@ router.post("/add", auth, async (req, res) => {
     
 
     await cart.save();
-    res.status(200).json({ message: "Product added to cart", cart , totalAmount});
+    res.status(200).json({ message: "Product added to cart", cart});
   } catch (error) {
     res.status(500).json({ message: "Error adding to cart", error: error.message });
   }
@@ -39,7 +39,7 @@ router.post("/add", auth, async (req, res) => {
 // ✅ 2. Get user cart
 router.get("/", auth, async (req, res) => {
   try {
-    const cart = await Cart.findOne({ userId: req.user._id }).populate("products.productId");
+    const cart = await Cart.findOne({ userId: req.user._id }).populate("userId" , "name").populate("products.productId");
     if (!cart) return res.status(404).json({ message: "Cart is empty" });
 
     let totalAmount = 0;
