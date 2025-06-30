@@ -2,6 +2,7 @@
 require("dotenv").config()
 const express = require("express")
 const connectDB = require("./config/db")
+const cors = require("cors")
 const userRouter = require("./controller/user.controller.js")
 const productRouter = require("./controller/product.controller.js")
 const cartRouter = require("./controller/cart.controller.js")
@@ -9,6 +10,13 @@ const orderRouter = require("./controller/order.controller.js")
 const reviewRouter = require("./controller/review.controller.js")
 const adminRouter = require("./controller/admin.controller.js")
 const app  = express()
+
+
+app.use(cors({
+    origin:process.env.FRONTEND_URL,
+    credentials:true,
+    methods:["POST","GET","PUT","DELETE","PATCH"]
+}))
 app.use(express.json())
 
 const PORT  = process.env.PORT

@@ -1,4 +1,3 @@
-// models/order.model.js
 const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema(
@@ -16,8 +15,8 @@ const orderSchema = new mongoose.Schema(
         },
         quantity: {
           type: Number,
-          default:1,
-          min:1
+          default: 1,
+          min: 1,
         },
       },
     ],
@@ -42,9 +41,17 @@ const orderSchema = new mongoose.Schema(
       enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
       default: "pending",
     },
+    cancelReason: {
+      type: String,
+      default: null,
+    },
+    deliveryDate: {
+      type: Date,
+      required: true,
+    },
   },
   { timestamps: true }
 );
 
 const Order = mongoose.model("Order", orderSchema);
-module.exports = Order
+module.exports = Order;

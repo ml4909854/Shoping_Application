@@ -7,8 +7,8 @@ const Cart = require("../model/cart.model");
 const router = express.Router();
 
 // ✅ Route 1: Buy Now - Place Single Product Order
-router.post("/buyOrderFromProduct", auth, async (req, res) => {
-  const { productId,quantity= 1 , address, paymentMethod } = req.body;
+router.post("/fromProduct", auth, async (req, res) => {
+  const { productId, quantity = 1, address, paymentMethod } = req.body;
 
   try {
     const product = await Product.findById(productId);
@@ -16,12 +16,17 @@ router.post("/buyOrderFromProduct", auth, async (req, res) => {
 
     const totalAmount = product.price * quantity;
 
+    const deliveryDays = Math.floor(Math.random() * 4) + 2;
+    const deliveryDate = new Date();
+    deliveryDate.setDate(deliveryDate.getDate() + deliveryDays);
+
     const newOrder = new Order({
       userId: req.user._id,
       products: [{ productId, quantity }],
       totalAmount,
       address,
       paymentMethod,
+      deliveryDate,
     });
 
     const savedOrder = await newOrder.save();
@@ -31,8 +36,8 @@ router.post("/buyOrderFromProduct", auth, async (req, res) => {
   }
 });
 
-// ✅ Route 2: Place Order From Cart (All Products in Cart)
-router.post("/buyOrderFromCart", auth, async (req, res) => {
+// ✅ Route 2: Place Order From Cart
+router.post("/fromCart", auth, async (req, res) => {
   const { address, paymentMethod } = req.body;
 
   try {
@@ -55,17 +60,21 @@ router.post("/buyOrderFromCart", auth, async (req, res) => {
       }
     }
 
+    const deliveryDays = Math.floor(Math.random() * 4) + 2;
+    const deliveryDate = new Date();
+    deliveryDate.setDate(deliveryDate.getDate() + deliveryDays);
+
     const newOrder = new Order({
       userId: req.user._id,
       products: finalProducts,
       totalAmount,
       address,
       paymentMethod,
+      deliveryDate,
     });
 
     const savedOrder = await newOrder.save();
 
-    // Clear cart after successful order
     cart.products = [];
     await cart.save();
 
@@ -78,43 +87,43 @@ router.post("/buyOrderFromCart", auth, async (req, res) => {
 // ✅ Route 3: Get Logged-in User's Orders
 router.get("/", auth, async (req, res) => {
   try {
-    const orders = await Order.find({ userId: req.user._id }).populate("userId" , "name").populate("products.productId");
-    if(orders.length === 0){
-        return res.status(404).json({message:"No orders! Please and order some product!"})
+    const orders = await Order.find({ userId: req.user._id })
+      .populate("userId", "name")
+      .populate("products.productId");
+
+    if (orders.length === 0) {
+      return res.status(404).json({ message: "No orders! Please place an order." });
     }
+
     res.status(200).json({ message: "Fetched orders successfully", orders });
   } catch (error) {
     res.status(500).json({ message: "Error fetching orders", error: error.message });
   }
 });
-router.delete("/delete/:orderId", auth, async (req, res) => {
+
+// ✅ Route 4: Cancel Order
+router.patch("/cancel/:orderId", auth, async (req, res) => {
   const { orderId } = req.params;
+  const { cancelReason } = req.body;
 
   try {
-    // Step 1: Find the order
-    const order = await Order.findOne({
-      _id: orderId,
-      userId: req.user._id,
-    });
+    const order = await Order.findOne({ _id: orderId, userId: req.user._id });
 
-    // Step 2: Check if it exists
     if (!order) {
       return res.status(404).json({ message: "Order not found or unauthorized" });
     }
 
-    // Step 3: Don't allow deletion if delivered
     if (order.status === "delivered") {
-      return res.status(400).json({
-        message: "Order history cannot be deleted. It contains your bill and warranty card.",
-      });
+      return res.status(400).json({ message: "Delivered orders cannot be cancelled." });
     }
 
-    // Step 4: Now delete
-    await Order.findByIdAndDelete(orderId);
+    order.status = "cancelled";
+    order.cancelReason = cancelReason;
+    await order.save();
 
-    res.status(200).json({ message: "Order deleted successfully", order });
+    res.status(200).json({ message: "Order cancelled", order });
   } catch (error) {
-    res.status(500).json({ message: "Error deleting order", error: error.message });
+    res.status(500).json({ message: "Error cancelling order", error: error.message });
   }
 });
 
