@@ -26,6 +26,22 @@ router.get("/order", auth, checkRole(roles.admin), async (req, res) => {
   }
 });
 
+// get order by particular Id
+router.get("/order/:orderId" , auth , checkRole(roles.admin) , async(req , res)=>{
+  try {
+    const orderId = req.params.orderId
+
+    const order =  await Order.findById(orderId).populate("userId" , "name").populate("products.productId")
+    if(!order){
+      res.status(404).json({message:"OrderDetails not avaiable"})
+    }
+    res.status(200).json({message:"Get order Details" , order})
+
+  } catch (error) {
+    res.status(500).json({message:"error to get a single order details" , error:error.message})
+  }
+})
+
 // ✅ Update order status — only for admin
 router.patch("/updateStatus/:orderId", auth, checkRole(roles.admin), async (req, res) => {
   const { orderId } = req.params;
